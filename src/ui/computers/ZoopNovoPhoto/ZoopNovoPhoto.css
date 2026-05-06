@@ -1,0 +1,61 @@
+.znp-blink {
+  animation: znp-blink-anim 0.8s step-end infinite;
+}
+.znp-blink-slow {
+  animation: znp-blink-anim 1.4s step-end infinite;
+}
+@keyframes znp-blink-anim {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.znp-watch {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+.znp-watch img.znp-bg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.znp-field {
+  position: absolute;
+  color: #1a1c12;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.znp-field.center { text-align: center; }
+.znp-field.right  { text-align: right; }
+
+.znp-sep {
+  position: absolute;
+  width: 1px;
+  background: rgba(26, 28, 18, 0.35);
+  pointer-events: none;
+}
+
+.znp-btn {
+  position: absolute;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 10;
+}
+.znp-btn:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.znp-alarm-red    { color: #c01000 !important; }
+.znp-alarm-orange { color: #b05800 !important; }
+.znp-ghost        { opacity: 0.28; }

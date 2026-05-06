@@ -1,34 +1,34 @@
 import type { ComponentType } from 'react'
 import type { DiveComputerProps } from './types'
-import ZoopNovo from './ZoopNovo/ZoopNovo'
+import ZoopNovoPhoto from './ZoopNovoPhoto/ZoopNovoPhoto'
 
 export interface UIComputerEntry {
   slug: string
   label: string
+  brand: string
   Component: ComponentType<DiveComputerProps>
 }
 
 /**
  * UI computer registry — maps computer slugs to React render components.
  *
- * Kept separate from the data registry (src/computers/computer-registry.ts)
- * so the data layer stays pure TypeScript with no React dependency.
- *
  * To add a new computer:
  *   1. Create its spec in src/computers/specs/<slug>.ts
- *   2. Build its renderer component in src/ui/computers/<Slug>/
- *   3. Add an entry below
+ *   2. Build its renderer in src/ui/computers/<Name>/<Name>.tsx
+ *   3. Add an entry below (slug must match the image at public/computers/<slug>.png)
  */
 export const UI_COMPUTER_REGISTRY: Record<string, UIComputerEntry> = {
   'suunto-zoop-novo': {
     slug: 'suunto-zoop-novo',
     label: 'Suunto Zoop Novo',
-    Component: ZoopNovo,
+    brand: 'Suunto',
+    Component: ZoopNovoPhoto,
   },
   // 'aqualung-i200': {
   //   slug: 'aqualung-i200',
   //   label: 'Aqualung i200',
-  //   Component: AqualungI200,
+  //   brand: 'Aqualung',
+  //   Component: AqualungI200Photo,
   // },
 }
 
