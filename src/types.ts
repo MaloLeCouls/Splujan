@@ -52,6 +52,7 @@ export type DiveState = {
   inDecompression: boolean
   ascentRateAlarm: 'ok' | 'warning' | 'danger'
   isPostDive: boolean
+  erLock: boolean
   noFlyTimeMinutes: number
   desaturationTimeMinutes: number
 

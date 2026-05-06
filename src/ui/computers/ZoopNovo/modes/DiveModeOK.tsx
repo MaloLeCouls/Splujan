@@ -27,8 +27,46 @@ function DiveAlarmIndicator({ x, y }: { x: number; y: number }) {
   )
 }
 
-function fmtDepth(d: number) {
-  return d.toFixed(1)
+// §3.4 — barre verticale côté droit, 5 segments, remontée du bas vers le haut.
+// Vert (1-2) → orange (3) → rouge (4-5). Max autorisé 10 m/min → SLOW au-delà.
+function AscentRateBar({ level }: { level: number }) {
+  if (level === 0) return null
+  const segH = 11
+  const segW = 7
+  const gap = 2
+  const x = 156
+  const baseY = 40  // top of first segment (highest on screen = level 5)
+  const segColors = ['#00a040', '#00a040', '#b05800', '#c01000', '#c01000']
+
+  return (
+    <g>
+      {/* Segments rendered top-to-bottom in SVG; top = high level, bottom = level 1 */}
+      {[5, 4, 3, 2, 1].map((segNum, i) => {
+        const y = baseY + i * (segH + gap)
+        const filled = segNum <= level
+        const color = segColors[segNum - 1]
+        return (
+          <rect
+            key={segNum}
+            x={x} y={y} width={segW} height={segH} rx="1"
+            fill={filled ? color : 'none'}
+            stroke={filled ? 'none' : '#1b2b08'}
+            strokeWidth="0.5"
+            opacity={filled ? 1 : 0.25}
+          />
+        )
+      })}
+    </g>
+  )
+}
+
+function ascentBarLevel(ascentRate: number): number {
+  if (ascentRate <= 0) return 0
+  if (ascentRate < 3) return 1
+  if (ascentRate < 6) return 2
+  if (ascentRate < 9) return 3
+  if (ascentRate < 12) return 4
+  return 5
 }
 
 function fmtClock() {
@@ -42,6 +80,11 @@ export default function DiveModeOK({ state }: Props) {
   const diveTimeStr = `${diveMin.toString().padStart(2, '0')}:${diveSec.toString().padStart(2, '0')}`
   const clockStr = fmtClock()
   const isAlarm = state.ascentRateAlarm !== 'ok'
+  const barLevel = ascentBarLevel(state.ascentRate)
+
+  // Safety stop: between 3–6 m during ascent after a meaningful dive (§3.2)
+  const isSafetyStop = state.depth >= 3 && state.depth <= 6
+    && state.maxDepth >= 10 && !state.inDecompression
 
   return (
     <g>
@@ -50,11 +93,22 @@ export default function DiveModeOK({ state }: Props) {
       <Battery x={148} y={6} />
 
       <text x="118" y="26" textAnchor="end" fontSize="27" className="lcd-digit">
-        {fmtDepth(state.depth)}
+        {state.depth.toFixed(1)}
       </text>
       <text x="122" y="19" fontSize="10" className="lcd-alpha">m</text>
 
       <line x1="4" y1="32" x2="162" y2="32" stroke="#1b2b08" strokeWidth="0.5" opacity="0.35" />
+
+      {/* Ascent rate bar — §3.4, vertical right side */}
+      <AscentRateBar level={barLevel} />
+
+      {/* STOP indicator — safety stop (3–6 m, non-mandatory) */}
+      {isSafetyStop && (
+        <text x="30" y="68" textAnchor="middle" fontSize="15"
+          className="lcd-alpha alarm-red zn-blink">
+          STOP
+        </text>
+      )}
 
       {/* NDL — dominant element */}
       {ndl !== null ? (
@@ -64,7 +118,7 @@ export default function DiveModeOK({ state }: Props) {
           fontSize="54"
           className={`lcd-digit${ndl <= 3 ? ' zn-blink' : ''}`}
         >
-          {ndl.toString().padStart(2, ' ')}
+          {ndl.toString().padStart(2, ' ')}
         </text>
       ) : (
         <text x="83" y="90" textAnchor="middle" fontSize="54" className="lcd-digit">

@@ -155,7 +155,6 @@ export default function ProfileEditor({ profile, onSave, onCancel, onDelete }: P
         </p>
         <EventList
           events={draft.events}
-          totalDurationSec={getTotalDurationSec(draft)}
           onChange={evs => patch({ events: evs })}
         />
       </section>

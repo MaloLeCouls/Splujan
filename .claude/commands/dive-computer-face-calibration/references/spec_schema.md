@@ -7,11 +7,15 @@ Full JSON schema for the calibration spec, with every field documented and a wor
 ```json
 {
   "model": "string — watch model identifier, human-readable",
+  "slug": "string — kebab-case identifier, e.g. 'suunto-zoop-novo'",
   "version": "string — spec version, '1.0' for now",
   "image_size": [width, height],
   "background": "string — filename of the clean watch image",
   "screen_bbox": [x, y, w, h],
+  "screen_background_color": "#hex — LCD/OLED background color",
+  "default_text_color": "#hex — default ink color for all fields",
   "fields": { /* see below */ },
+  "buttons": { /* see below */ },
   "static_labels": { /* see below, optional */ },
   "presets": { /* see below, optional */ },
   "notes": "string — free-text caveats"
@@ -19,6 +23,9 @@ Full JSON schema for the calibration spec, with every field documented and a wor
 ```
 
 All coordinates are in **clean-image pixel space**, origin top-left, x→right, y→down.
+
+- **`screen_background_color`**: `#000000` for black OLED, `#7fbf5e` for classic green LCD. Used by the renderer as the LCD fill color.
+- **`default_text_color`**: fallback color for all fields that don't specify their own `color`. On black screens typically `#ffffff` or `#00e5ff`; on green LCD typically `#1b2b08`.
 
 ## `fields` — the heart of the spec
 
@@ -56,6 +63,47 @@ Optional: everything else.
 - **`suffix` / `prefix`**: rendered relative to the value's bbox. `gap` is the pixel space between value and suffix.
 - **`blink`**: hint for the renderer; the spec does not animate.
 - **`value_type`** + **`value_format`**: lets a renderer accept typed input. `time` with format `"%02d:%02d"` accepts `[14, 27]` and renders `"14:27"`.
+- **`segment_colors`**: array of `#hex` strings, one per segment level ordered low-to-high. Only meaningful for bar/segment fields (`ascent_rate_bar`, `ceiling_bar`, `tissue_bar_colored`, `gradient_bar`). Example: `["#00cc44", "#00cc44", "#ffaa00", "#ff4400", "#ff0000"]` for a 5-level ascent rate bar. Omit for monochrome displays.
+- **`orientation`**: `"horizontal"` or `"vertical"` for bar fields. Default is `"vertical"` for most ascent/tissue bars.
+
+## `buttons` — physical controls
+
+Maps logical button IDs (user-chosen snake_case keys) to button specs. Extract from the device manual's controls/buttons section. **This section is required for interactive simulation** — without it a renderer cannot respond to button presses.
+
+Full button spec shape and mode/action vocabulary: see `references/button_vocabulary.md`.
+
+```json
+{
+  "top_right": {
+    "shape": "round",
+    "position": "front_top_right",
+    "label": "SELECT",
+    "bbox_on_image": [820, 280, 40, 40],
+    "confidence": "high",
+    "actions": {
+      "surface": "enter_menu",
+      "surface_long": "toggle_light",
+      "diving_safe": "set_bookmark",
+      "diving_deco": null,
+      "menu": "confirm"
+    }
+  },
+  "bottom_right": {
+    "shape": "rect_v",
+    "position": "side_right_bottom",
+    "label": null,
+    "bbox_on_image": [930, 500, 18, 60],
+    "confidence": "high",
+    "actions": {
+      "surface": "scroll_down",
+      "diving_safe": "toggle_ascent_alarm",
+      "menu": "scroll_down"
+    }
+  }
+}
+```
+
+If no manual is available, emit placeholder buttons with empty `actions: {}` and `"confidence": "low"` so the spec remains valid while flagging what needs to be filled in.
 
 ## `static_labels` — bezel-printed text
 
@@ -104,15 +152,24 @@ Optional. Each preset is a snapshot of the display in a particular situation, po
 
 `flags` are free-text hints the renderer interprets (e.g., `"asc_arrow_up"`, `"er_lock"`, `"battery_low"`, `"alarm_blinking"`).
 
+`triggered_by` (optional) — the button press that transitions into this state. Extract from the manual's operating-mode flow diagram or controls table:
+```json
+"triggered_by": { "button": "top_right", "action": "start_dive" }
+```
+Omit if the state is reached automatically (e.g., depth threshold) rather than by a button press.
+
 ## Worked example — partial Suunto Zoop spec
 
 ```json
 {
   "model": "Suunto Zoop Novo",
+  "slug": "suunto-zoop-novo",
   "version": "1.0",
   "image_size": [1240, 1240],
-  "background": "zoop_novo_clean.png",
+  "background": "suunto-zoop-novo_clean.png",
   "screen_bbox": [340, 280, 560, 680],
+  "screen_background_color": "#c8d8a8",
+  "default_text_color": "#1b2b08",
   "fields": {
     "depth": {
       "bbox": [420, 320, 360, 130],
@@ -175,10 +232,37 @@ Optional. Each preset is a snapshot of the display in a particular situation, po
       "font": "segments",
       "size": 200,
       "align": "left",
-      "color": "#000",
       "value_type": "enum",
       "value_format": "0..5",
+      "segment_colors": ["#00cc44", "#00cc44", "#ffaa00", "#ff4400", "#ff0000"],
+      "orientation": "vertical",
       "confidence": "medium"
+    }
+  },
+  "buttons": {
+    "top_right": {
+      "shape": "round",
+      "position": "front_top_right",
+      "label": "SELECT",
+      "bbox_on_image": [820, 280, 40, 40],
+      "confidence": "high",
+      "actions": {
+        "surface": "enter_menu",
+        "surface_long": "toggle_light",
+        "diving_safe": "set_bookmark",
+        "menu": "confirm"
+      }
+    },
+    "bottom_right": {
+      "shape": "rect_v",
+      "position": "side_right_bottom",
+      "label": null,
+      "bbox_on_image": [930, 500, 18, 60],
+      "confidence": "high",
+      "actions": {
+        "surface": "scroll_down",
+        "menu": "scroll_down"
+      }
     }
   },
   "presets": {
@@ -192,10 +276,11 @@ Optional. Each preset is a snapshot of the display in a particular situation, po
         "time": "14:27",
         "dive_time": 18
       },
-      "flags": []
+      "flags": [],
+      "triggered_by": { "button": "top_right", "action": "start_dive" }
     }
   },
-  "notes": "Coordinates measured from a 1240x1240 clean render. Ascent-rate bar is a single field with discrete segment levels 0-5; renderer fills bottom-up."
+  "notes": "Coordinates measured from a 1240x1240 clean render. Ascent-rate bar: 5 segment levels, fills bottom-up, colored green→orange→red."
 }
 ```
 
@@ -208,4 +293,6 @@ Before emitting:
 - [ ] Every field has `bbox`, `font`, `size`, `align`.
 - [ ] No invented field names (cross-check `field_vocabulary.md`).
 - [ ] Presets reference only field names that exist in `fields`.
+- [ ] `buttons` section present; each button has `shape`, `position`, `bbox_on_image`, `actions`.
+- [ ] `screen_background_color` and `default_text_color` are set.
 - [ ] JSON parses (mental check: balanced braces, commas, quotes).

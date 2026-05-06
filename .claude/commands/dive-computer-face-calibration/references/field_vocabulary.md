@@ -59,6 +59,8 @@ If a watch has a feature truly outside this list, invent a snake_case name and d
 
 ## Indicators / icons
 
+> **`segment_colors` note**: any bar or segmented field may include `"segment_colors": ["#hex", ...]` in its spec — one hex per segment level ordered low-to-high. The renderer uses these to color individual segments. Omit for monochrome displays; required for computers with red/green/orange color zones. Example for a 5-level ascent rate bar: `["#00cc44", "#00cc44", "#ffaa00", "#ff4400", "#ff0000"]`.
+
 | Canonical name | Description |
 |---|---|
 | `dive_alarm_indicator` | Dive alarm active — rendered as 3-arc buzzer/speaker icon. **Never identify from shape alone — always confirm in the manual icon table.** (Suunto Zoop Novo: icône #2 "Alarme de plongée", p.8.) |
@@ -73,11 +75,28 @@ If a watch has a feature truly outside this list, invent a snake_case name and d
 | `airplane_no` | "No fly" airplane-with-cross icon |
 | `down_arrow` | Descend instruction |
 | `up_arrow` | Ascend instruction |
-| `tissue_bar` | Tissue saturation bar graph |
+| `ascent_rate_bar` | Visual ascent-rate indicator (segmented bar). Use `segment_colors` for green/orange/red zones. |
+| `ceiling_bar` | Colored depth-range bar shown during deco — typically red at the top (ceiling), green below (safe zone). Vertical bar; `value_type: "number"` holds ceiling depth. |
+| `tissue_bar` | Tissue saturation bar graph (monochrome) |
+| `tissue_bar_colored` | Tissue saturation bar with color zones (green → yellow → red as saturation rises). Use `segment_colors`. |
 | `n2_bar` | Nitrogen loading bar |
-| `o2_bar` | Oxygen loading bar |
+| `o2_bar` | Oxygen loading bar (OTU) |
+| `gradient_bar` | Multi-zone horizontal or vertical bar, e.g. GF visualization on Shearwater computers. Use `segment_colors` and `orientation: "horizontal" | "vertical"`. |
+| `cursor` | Moveable needle or line indicator — pointer on a depth scale, target depth marker, etc. `value_type: "number"` holds the pointed-to value. |
+| `highlight_box` | Filled rectangle that inverts or highlights the active field during menu navigation. `value_type: "string"` holds the ID of the highlighted field. |
 
 > **Icon identification rule — MANDATORY**: Visual shape alone is never sufficient to name an icon. A 3-arc pattern could be a speaker, an alarm, a wireless signal, or a sonar ping depending on the manufacturer. Before assigning any canonical name to an icon-shaped field, read the device manual's icon table and match by documented meaning, not appearance. If the manual is not available, name it `<slug>_icon_unidentified` and flag `"confidence": "low"`.
+
+## Display theme
+
+These two properties belong at the **spec root level** (not inside `fields`). They define the display's base appearance; individual fields override via their own `color` property.
+
+| Property | Description |
+|---|---|
+| `screen_background_color` | `#hex` of the LCD/OLED background. `#000000` for black OLED (Shearwater, Garmin), `#7fbf5e` for classic green LCD (Suunto Zoop, Cressi), `#c8b400` for yellow LCD, etc. |
+| `default_text_color` | `#hex` default ink color for all rendered text and icons. On black screens: white `#ffffff`, cyan `#00e5ff`, or amber `#ffaa00`. On green LCD: dark green `#1b2b08` or near-black. |
+
+If both are omitted, the renderer falls back to its own defaults. Always populate them when calibrating a computer with a non-standard color scheme.
 
 ## Free-dive specific
 

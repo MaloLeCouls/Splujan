@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { DisplayMode, FieldConfig, FieldConfigMap, FontFamily } from './types'
+import type { DisplayMode, FieldConfigMap, FontFamily } from './types'
 import { DISPLAY_MODE_LABELS, FONT_FAMILIES, FONT_LABELS } from './types'
 import { useCalibrationStore } from './useCalibrationStore'
 

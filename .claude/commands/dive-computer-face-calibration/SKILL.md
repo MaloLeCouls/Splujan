@@ -29,7 +29,7 @@ If only the filled image is supplied, ask for the clean version. Calibration wit
 
 ## Output
 
-A single JSON file at `/mnt/user-data/outputs/<watch-model-slug>.spec.json` conforming to `references/spec_schema.md`. Plus a short markdown summary in chat. Call `present_files` on the JSON.
+The generated spec is written to `docs/computers/<slug>/<slug>.spec.json` (see **File organisation** below). Plus a short markdown summary in chat. Call `present_files` on the JSON.
 
 The JSON must contain:
 - `model` — watch identifier
@@ -41,6 +41,28 @@ The JSON must contain:
 - `notes` — free-text caveats and uncertainty flags
 
 **Do not auto-build a renderer in the same turn.** Specs and renderers stay decoupled by design. If the user asks for a renderer after reviewing the spec, build it then.
+
+## File organisation
+
+Each dive computer's assets live together under `docs/computers/<slug>/` using this naming convention:
+
+```
+docs/computers/<slug>/
+  <slug>_clean.<ext>               # required — empty screen image
+  <slug>_filled_<variant>.<ext>    # one or more — screen with content visible
+  <slug>_manual[_<lang>].<ext>     # primary user manual (PDF or images)
+  <slug>_manual_<topic>.<ext>      # additional manuals (algorithm, service, etc.)
+  <slug>_<anything>.<ext>          # any other relevant reference material
+  <slug>.spec.json                 # generated calibration spec (OUTPUT)
+```
+
+- `<slug>` matches the spec's `slug` field (e.g., `suunto-zoop-novo`).
+- `<variant>` is a short descriptor: `dive_ok`, `deco`, `surface`, `logbook`, `post_dive`, etc.
+- `<lang>` suffix for non-English manuals: `_fr`, `_en`, `_de`, etc.
+- Multiple filled images and multiple manuals are fine — name them descriptively.
+- Subfolders (`images/`, `manuals/`) are allowed if the user prefers but are not required.
+
+When the user uploads files, suggest moving and renaming them according to this convention before calibration begins. This makes re-calibration, manual lookups, and multi-language support unambiguous.
 
 ## Workflow
 
@@ -93,9 +115,27 @@ For each piece of content visible on the filled image, determine:
 
 For each field, internally rate confidence (high/medium/low) based on how cleanly the diff isolated it and how confident the font assignment is. Add `"confidence": "low"` to any field that should be reviewed first. Surface low-confidence fields in the chat summary.
 
+### Step 5b — Extract button map and interactions (mandatory when manual is available)
+
+This step is **non-optional when a manual is provided**. The application goal is to simulate a dive — a spec without button actions cannot drive an interactive simulation.
+
+Locate the "Controls", "Buttons", or "Operating your computer" section of the manual (typically within the first few sections). For each physical button:
+
+1. Identify its **shape** and **position** on the watch body (front/side, round/rect).
+2. Record its **bezel label** if any.
+3. Record every documented action per operating mode: surface, diving (safe and deco), menu, logbook, freedive, post-dive.
+4. Record **long-press** behaviors if documented separately.
+5. If the manual uses a lettered or numbered diagram (common in Suunto manuals), cross-reference the diagram identifier to the physical button.
+
+Emit the `buttons` object in the spec following `references/button_vocabulary.md`.
+
+If a button's behavior is not documented for a given mode, **omit that mode key** (unknown ≠ does nothing). If the entire manual section is missing, create placeholder entries with `"actions": {}` and `"confidence": "low"`, and document what is needed in `notes`.
+
+If no manual is available, still create placeholder buttons from the clean/filled images — visible bezel labels and button positions can usually be read even without documentation.
+
 ### Step 6 — Optional: extract presets from the manual
 
-If a manual PDF is provided, scan it for screen illustrations and tables describing display states. The Suunto Zoop manual, for example, documents:
+If a manual PDF is provided, scan it for screen illustrations and tables describing display states, **and** for operating-mode flow diagrams that show which button press leads to which state. The Suunto Zoop manual, for example, documents:
 
 - surface view, active dive view (Air / Nitrox / Gauge / Free)
 - decompression required (with `ASC TIME` and `CEILING`)
@@ -109,6 +149,12 @@ For each documented state, emit a preset under `presets`: a partial map of field
 This is what lets a renderer simulate "the watch over time" — the runtime transitions between presets and interpolates numeric fields between them.
 
 **Do not invent values not present in the manual.** If a state is described qualitatively only ("the screen flashes"), emit it with a `flags` field rather than guessing numbers.
+
+For each preset/state, also note which button press triggers the transition into it. Add `triggered_by` if known:
+```json
+"triggered_by": { "button": "top_right", "action": "start_dive" }
+```
+Omit `triggered_by` when the state is entered automatically (depth threshold, timeout, etc.) rather than by an explicit button press.
 
 If the manual page you are scanning to extract presets is also the icon-table page (or adjacent to it), use that opportunity to complete Step 3b — cross-check every icon in `visible_fields` against the manual's documented meaning before committing the preset.
 
@@ -155,4 +201,5 @@ After presenting the spec, expect at least one round of human adjustment. Common
 
 - `references/spec_schema.md` — full JSON schema with every field documented and an example.
 - `references/field_vocabulary.md` — canonical field names. **Read this before naming any field.**
+- `references/button_vocabulary.md` — button shapes, positions, mode keys, and action names. **Read this before writing the `buttons` section.**
 - `references/fonts_guide.md` — font type definitions, when to use each, free font sources.

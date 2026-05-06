@@ -25,6 +25,17 @@ function Battery({ x, y }: { x: number; y: number }) {
   )
 }
 
+// Icône #2 manuel Zoop Novo — "Alarme de plongée" (3 arcs, haut-parleur/buzzer)
+function DiveAlarmIndicator({ x, y }: { x: number; y: number }) {
+  return (
+    <g fill="none" stroke="#1b2b08" strokeWidth="1.2" strokeLinecap="round">
+      <path d={`M ${x + 1} ${y + 7} A 4 4 0 0 1 ${x + 1} ${y - 1}`} />
+      <path d={`M ${x + 4.5} ${y + 9} A 7 7 0 0 1 ${x + 4.5} ${y - 3}`} />
+      <path d={`M ${x + 8} ${y + 11} A 10 10 0 0 1 ${x + 8} ${y - 5}`} />
+    </g>
+  )
+}
+
 export default function DiveModeStop({ state }: Props) {
   // decoStops sorted deepest-first → [0] is the first required stop (deepest)
   const firstStop = state.decoStops[0]
@@ -36,7 +47,8 @@ export default function DiveModeStop({ state }: Props) {
 
   return (
     <g>
-      {/* Row 1 — depth + battery */}
+      {/* Row 1 — dive alarm indicator, depth, battery */}
+      <DiveAlarmIndicator x={5} y={13} />
       <Battery x={148} y={6} />
 
       <text x="118" y="26" textAnchor="end" fontSize="27" className="lcd-digit">

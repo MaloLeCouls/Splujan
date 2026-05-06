@@ -42,6 +42,9 @@ export function mapStateToCanonical(state: DiveState, wallClock = new Date()): C
     o2_percent:    Math.round(state.gas.o2Fraction * 100),
     tank_pressure: Math.round(state.tankPressure),
 
+    // Mode string derived from gas mix
+    mode: state.gas.o2Fraction > 0.209 ? 'NITROX' : 'AIR',
+
     // Indicators derived from state
     // Icône #2 manuel — "Alarme de plongée" : active dès qu'on est en immersion
     dive_alarm_indicator: state.depth > 0.5,
@@ -52,8 +55,9 @@ export function mapStateToCanonical(state: DiveState, wallClock = new Date()): C
 }
 
 function computeAscentBar(state: DiveState): number {
-  if (state.ascentRate >= 0) return 0
-  const rate = -state.ascentRate
+  // ascentRate > 0 = ascending (prevDepth > depth), bar shows during ascent
+  if (state.ascentRate <= 0) return 0
+  const rate = state.ascentRate
   if (rate < 3) return 1
   if (rate < 6) return 2
   if (rate < 9) return 3

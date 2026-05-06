@@ -56,11 +56,20 @@ export class Simulator {
     const sortedEvents = [...profile.events].sort((a, b) => a.triggerAtSec - b.triggerAtSec)
 
     let maxDepth = 0
+    let erLock = false
+    let prevInDeco = false
     const states: DiveState[] = []
 
     for (let t = 0; t <= totalSec; t++) {
       // Apply events for this tick
       applyEvents(ctx, sortedEvents, t)
+
+      // ER lock: skip_stop event while in deco → algorithm lock (§3.16)
+      if (!erLock && prevInDeco) {
+        if (sortedEvents.some(e => e.triggerAtSec === t && e.type === 'skip_stop')) {
+          erLock = true
+        }
+      }
 
       const depth = getDepthAtTime(profile, t)
       const prevDepth = t > 0 ? getDepthAtTime(profile, t - 1) : 0
@@ -119,6 +128,8 @@ export class Simulator {
 
       const isPostDive = depth < 0.1 && maxDepth > 1 && t > 0
 
+      prevInDeco = inDecompression
+
       states.push({
         timeSec: t,
         depth,
@@ -135,6 +146,7 @@ export class Simulator {
         inDecompression,
         ascentRateAlarm,
         isPostDive,
+        erLock,
         noFlyTimeMinutes: 0,
         desaturationTimeMinutes: 0,
       })

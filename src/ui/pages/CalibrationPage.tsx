@@ -17,7 +17,7 @@ const BASE_STATE: DiveState = {
   compartments: [], ndlMinutes: null, ceilingDepth: 0,
   decoStops: [], totalAscentTimeSec: 0,
   inDecompression: false, ascentRateAlarm: 'ok',
-  isPostDive: false, noFlyTimeMinutes: 0, desaturationTimeMinutes: 0,
+  isPostDive: false, erLock: false, noFlyTimeMinutes: 0, desaturationTimeMinutes: 0,
 }
 
 const MOCK_STATES: Record<DisplayMode, DiveState> = {

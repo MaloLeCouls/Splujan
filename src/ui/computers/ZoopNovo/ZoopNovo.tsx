@@ -3,15 +3,17 @@ import SurfaceMode from './modes/SurfaceMode'
 import DiveModeOK from './modes/DiveModeOK'
 import DiveModeStop from './modes/DiveModeStop'
 import PostDiveMode from './modes/PostDiveMode'
+import ERLockMode from './modes/ERLockMode'
 import './styles.css'
 
 const W = 210
 const H = 255
 export const SCR = { x: 22, y: 28, w: 166, h: 192 } as const
 
-export default function ZoopNovo({ state, scale = 1 }: DiveComputerProps) {
+export default function ZoopNovo({ state, scale = 1, onButtonPress }: DiveComputerProps) {
   function renderScreen() {
-    if (state.isPostDive) return <PostDiveMode state={state} />
+    if (state.erLock)        return <ERLockMode state={state} />
+    if (state.isPostDive)    return <PostDiveMode state={state} />
     if (state.depth < 0.5 && state.maxDepth === 0) return <SurfaceMode state={state} />
     if (state.inDecompression) return <DiveModeStop state={state} />
     return <DiveModeOK state={state} />
@@ -99,31 +101,39 @@ export default function ZoopNovo({ state, scale = 1 }: DiveComputerProps) {
         UP
       </text>
 
-      {/* LEFT — SELECT button */}
+      {/* LEFT — SELECT button (play/pause) */}
       <text x="8" y="74" textAnchor="middle"
         fontSize="4.2" fontFamily="Arial,sans-serif" fontWeight="bold"
         letterSpacing="0.3" fill="rgba(255,255,255,0.58)">
         SELECT
       </text>
-      <rect x="1" y="77" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5" />
-      <rect x="3" y="79.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)" />
+      <rect x="1" y="77" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5"
+        onClick={() => onButtonPress?.('select')} style={{ cursor: onButtonPress ? 'pointer' : 'default' }} />
+      <rect x="3" y="79.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)"
+        style={{ pointerEvents: 'none' }} />
 
-      {/* LEFT — DOWN button */}
-      <rect x="1" y="160" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5" />
-      <rect x="3" y="162.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)" />
+      {/* LEFT — DOWN button (seek −30 s) */}
+      <rect x="1" y="160" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5"
+        onClick={() => onButtonPress?.('down')} style={{ cursor: onButtonPress ? 'pointer' : 'default' }} />
+      <rect x="3" y="162.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)"
+        style={{ pointerEvents: 'none' }} />
 
-      {/* RIGHT — MODE button */}
+      {/* RIGHT — MODE button (toggle mode) */}
       <text x={W - 8} y="74" textAnchor="middle"
         fontSize="4.2" fontFamily="Arial,sans-serif" fontWeight="bold"
         letterSpacing="0.3" fill="rgba(255,255,255,0.58)">
         MODE
       </text>
-      <rect x={W - 13} y="77" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5" />
-      <rect x={W - 11} y="79.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)" />
+      <rect x={W - 13} y="77" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5"
+        onClick={() => onButtonPress?.('mode')} style={{ cursor: onButtonPress ? 'pointer' : 'default' }} />
+      <rect x={W - 11} y="79.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)"
+        style={{ pointerEvents: 'none' }} />
 
-      {/* RIGHT — UP button */}
-      <rect x={W - 13} y="160" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5" />
-      <rect x={W - 11} y="162.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)" />
+      {/* RIGHT — UP button (seek +30 s) */}
+      <rect x={W - 13} y="160" width="12" height="23" rx="3" fill="url(#zn-btn)" stroke="#111" strokeWidth="0.5"
+        onClick={() => onButtonPress?.('up')} style={{ cursor: onButtonPress ? 'pointer' : 'default' }} />
+      <rect x={W - 11} y="162.5" width="8" height="3.5" rx="1" fill="rgba(255,255,255,0.08)"
+        style={{ pointerEvents: 'none' }} />
     </svg>
   )
 }

@@ -1,102 +1,141 @@
 import type { DiveSegment } from '../../types'
+import Icon from '../components/Icon'
+import { UnitInput } from '../components/Layout'
 
 type Props = {
   segments: DiveSegment[]
-  onChange: (segments: DiveSegment[]) => void
+  onChange: (s: DiveSegment[]) => void
 }
 
-const SEGMENT_TYPE_LABELS: Record<DiveSegment['type'], string> = {
-  descent:  'Descente',
-  constant: 'Fond (profondeur constante)',
-  ascent:   'Remontée',
-}
+const KIND_META = {
+  descent:  { label: 'Descente',  glyph: '↘', color: 'var(--accent)' },
+  constant: { label: 'Plateau',   glyph: '→', color: 'var(--ink-2)' },
+  ascent:   { label: 'Remontée',  glyph: '↗', color: 'oklch(0.55 0.08 145)' },
+} as const
 
 export default function SegmentList({ segments, onChange }: Props) {
-  function update(index: number, patch: Partial<DiveSegment>) {
-    const updated = segments.map((s, i) => (i === index ? { ...s, ...patch } as DiveSegment : s))
-    onChange(updated)
+  function update(i: number, seg: DiveSegment) {
+    const next = [...segments]; next[i] = seg; onChange(next)
   }
-
-  function remove(index: number) {
-    onChange(segments.filter((_, i) => i !== index))
+  function remove(i: number) { onChange(segments.filter((_, j) => j !== i)) }
+  function move(i: number, dir: -1 | 1) {
+    const j = i + dir
+    if (j < 0 || j >= segments.length) return
+    const next = [...segments]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    onChange(next)
   }
-
-  function addSegment() {
+  function add(kind: DiveSegment['type']) {
     const last = segments[segments.length - 1]
-    const lastDepth = last
-      ? last.type === 'constant' ? last.depth : last.toDepth
-      : 0
-    const newSeg: DiveSegment = { type: 'constant', depth: lastDepth, durationSec: 5 * 60 }
-    onChange([...segments, newSeg])
+    const lastDepth = last ? ('toDepth' in last ? last.toDepth : last.depth) : 0
+    const seg: DiveSegment =
+      kind === 'descent' ? { type: 'descent', toDepth: Math.max(lastDepth, 20), durationSec: 120 } :
+      kind === 'constant' ? { type: 'constant', depth: lastDepth, durationSec: 600 } :
+      { type: 'ascent', toDepth: 0, durationSec: 180 }
+    onChange([...segments, seg])
   }
 
   return (
-    <div className="space-y-2">
-      {segments.map((seg, i) => (
-        <div key={i} className="flex flex-wrap gap-2 items-center p-2 bg-gray-50 rounded-lg border border-gray-200">
-          <select
-            value={seg.type}
-            title="Type de phase : descente vers la profondeur cible, maintien au fond, ou remontée"
-            onChange={e => {
-              const type = e.target.value as DiveSegment['type']
-              if (type === 'constant') {
-                update(i, { type, depth: seg.type === 'constant' ? seg.depth : (seg as { toDepth: number }).toDepth } as Partial<DiveSegment>)
-              } else {
-                update(i, { type, toDepth: seg.type === 'constant' ? seg.depth : (seg as { toDepth: number }).toDepth } as Partial<DiveSegment>)
-              }
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {segments.map((seg, i) => {
+        const meta = KIND_META[seg.type]
+        return (
+          <div
+            key={i}
+            className="ds-card"
+            style={{
+              padding: 12,
+              display: 'grid',
+              gridTemplateColumns: '24px 110px 1fr auto',
+              alignItems: 'center', gap: 12,
             }}
-            className="border rounded px-1 py-0.5 text-sm"
           >
-            {(Object.keys(SEGMENT_TYPE_LABELS) as DiveSegment['type'][]).map(t => (
-              <option key={t} value={t}>{SEGMENT_TYPE_LABELS[t]}</option>
-            ))}
-          </select>
+            <div className="ds-mono" style={{ color: 'var(--ink-4)', fontSize: 11, textAlign: 'center' }}>
+              {String(i + 1).padStart(2, '0')}
+            </div>
 
-          <label className="text-sm text-gray-600 flex items-center gap-1" title="Profondeur cible en mètres">
-            Profondeur
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={seg.type === 'constant' ? seg.depth : seg.toDepth}
-              onChange={e => {
-                const depth = parseFloat(e.target.value) || 0
-                if (seg.type === 'constant') update(i, { depth } as Partial<DiveSegment>)
-                else update(i, { toDepth: depth } as Partial<DiveSegment>)
-              }}
-              className="w-16 ml-1 border rounded px-1 py-0.5 text-sm"
-            />
-            m
-          </label>
+            <div className="flex items-center gap-2" style={{ color: meta.color }}>
+              <span style={{ fontSize: 18, lineHeight: 1, fontFamily: 'var(--font-mono)' }}>{meta.glyph}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{meta.label}</span>
+            </div>
 
-          <label className="text-sm text-gray-600 flex items-center gap-1" title="Durée de cette phase en minutes">
-            Durée
-            <input
-              type="number"
-              min={1}
-              value={Math.round(seg.durationSec / 60)}
-              onChange={e => update(i, { durationSec: (parseFloat(e.target.value) || 1) * 60 })}
-              className="w-14 ml-1 border rounded px-1 py-0.5 text-sm"
-            />
-            min
-          </label>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {seg.type === 'constant' ? (
+                <Inline label="à">
+                  <SmallNumber value={seg.depth} unit="m"
+                    onChange={v => update(i, { ...seg, depth: v })}/>
+                </Inline>
+              ) : (
+                <Inline label="vers">
+                  <SmallNumber value={seg.toDepth} unit="m"
+                    onChange={v => update(i, { ...seg, toDepth: v })}/>
+                </Inline>
+              )}
+              <Inline label="durée">
+                <SmallNumber
+                  value={Math.round(seg.durationSec / 60 * 10) / 10}
+                  unit="min"
+                  step={0.5}
+                  onChange={v => update(i, { ...seg, durationSec: Math.round(v * 60) } as DiveSegment)}
+                />
+              </Inline>
+            </div>
 
-          <button
-            onClick={() => remove(i)}
-            className="ml-auto text-red-400 hover:text-red-600 text-sm"
-            title="Supprimer ce segment"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
+            <div className="flex gap-1">
+              <button onClick={() => move(i, -1)} disabled={i === 0} className="ds-btn ds-btn-sm ds-btn-icon ds-btn-ghost" title="Monter">
+                <Icon name="chevron-down" size={12} style={{ transform: 'rotate(180deg)' }}/>
+              </button>
+              <button onClick={() => move(i, 1)} disabled={i === segments.length - 1} className="ds-btn ds-btn-sm ds-btn-icon ds-btn-ghost" title="Descendre">
+                <Icon name="chevron-down" size={12}/>
+              </button>
+              <button onClick={() => remove(i)} className="ds-btn ds-btn-sm ds-btn-icon ds-btn-ghost" title="Supprimer" style={{ color: 'var(--danger)' }}>
+                <Icon name="x" size={12}/>
+              </button>
+            </div>
+          </div>
+        )
+      })}
 
-      <button
-        onClick={addSegment}
-        className="w-full py-1.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors"
-      >
-        + Ajouter un segment
-      </button>
+      <div className="flex gap-2 mt-1">
+        <button onClick={() => add('descent')} className="ds-btn ds-btn-sm">
+          <span style={{ color: KIND_META.descent.color, fontFamily: 'var(--font-mono)' }}>↘</span> Descente
+        </button>
+        <button onClick={() => add('constant')} className="ds-btn ds-btn-sm">
+          <span style={{ color: KIND_META.constant.color, fontFamily: 'var(--font-mono)' }}>→</span> Plateau
+        </button>
+        <button onClick={() => add('ascent')} className="ds-btn ds-btn-sm">
+          <span style={{ color: KIND_META.ascent.color, fontFamily: 'var(--font-mono)' }}>↗</span> Remontée
+        </button>
+      </div>
     </div>
   )
 }
+
+function Inline({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>{label}</span>
+      {children}
+    </div>
+  )
+}
+
+function SmallNumber({ value, unit, onChange, step = 1 }: {
+  value: number; unit: string; onChange: (v: number) => void; step?: number
+}) {
+  return (
+    <div style={{ position: 'relative', width: 92 }}>
+      <input
+        type="number" value={value} step={step}
+        onChange={e => onChange(parseFloat(e.target.value) || 0)}
+        className="ds-input ds-mono"
+        style={{ height: 28, fontSize: 12.5, paddingRight: 38 }}
+      />
+      <span className="ds-mono" style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ink-4)' }}>
+        {unit}
+      </span>
+    </div>
+  )
+}
+
+export { UnitInput }
