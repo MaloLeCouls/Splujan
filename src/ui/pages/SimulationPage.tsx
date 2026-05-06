@@ -5,6 +5,17 @@ import { Simulator } from '../../engine/simulator'
 import { getComputerEntry, listUIComputers } from '../computers/ui-registry'
 import PlaybackControls from '../controls/PlaybackControls'
 import type { Speed } from '../controls/SpeedSelector'
+import { useCalibrationStore } from '../calibration/useCalibrationStore'
+import CalibrationPanel from '../calibration/CalibrationPanel'
+import { ZOOP_NOVO_DEFAULTS, mergeConfigs } from '../calibration/zoop-novo-defaults'
+import type { DisplayMode } from '../calibration/types'
+
+function getDisplayMode(depth: number, maxDepth: number, inDeco: boolean, isPostDive: boolean): DisplayMode {
+  if (isPostDive) return 'post-dive'
+  if (depth < 0.5 && maxDepth === 0) return 'surface'
+  if (inDeco) return 'dive-deco'
+  return 'dive-ok'
+}
 
 export default function SimulationPage() {
   const { profileId } = useParams<{ profileId: string }>()
@@ -23,7 +34,14 @@ export default function SimulationPage() {
   const [speed, setSpeed] = useState<Speed>(1)
   const [showComputerMenu, setShowComputerMenu] = useState(false)
 
-  const rafRef = useRef<number | null>(null)
+  const { isCalibrating, selectedFieldId, toggleCalibration, selectField } = useCalibrationStore()
+  const calibOverridesObj = useCalibrationStore(s => s.overrides[selectedComputerSlug])
+  const mergedCalibConfigs = useMemo(
+    () => mergeConfigs(ZOOP_NOVO_DEFAULTS, calibOverridesObj ?? {}),
+    [calibOverridesObj],
+  )
+
+  const rafRef   = useRef<number | null>(null)
   const lastTsRef = useRef<number | null>(null)
 
   const tick = useCallback(
@@ -66,13 +84,24 @@ export default function SimulationPage() {
         e.preventDefault()
         setIsPlaying(p => !p)
       }
-      if (e.code === 'ArrowLeft') setCurrentTime(t => Math.max(0, t - 30))
-      if (e.code === 'ArrowRight') setCurrentTime(t => Math.min(t + 30, simulator?.totalDurationSec ?? 0))
-      if (e.code === 'Escape' && isPresentationMode) togglePresentationMode()
+      // Arrow keys for seek — suppressed when calibrating with a field selected
+      const calibBusy = isCalibrating && selectedFieldId !== null
+      if (!calibBusy) {
+        if (e.code === 'ArrowLeft')  setCurrentTime(t => Math.max(0, t - 30))
+        if (e.code === 'ArrowRight') setCurrentTime(t => Math.min(t + 30, simulator?.totalDurationSec ?? 0))
+      }
+      if (e.code === 'Escape') {
+        if (isCalibrating) {
+          if (selectedFieldId) selectField(null)
+          else toggleCalibration()
+        } else if (isPresentationMode) {
+          togglePresentationMode()
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isPresentationMode, simulator, togglePresentationMode])
+  }, [isPresentationMode, isCalibrating, selectedFieldId, simulator, togglePresentationMode, toggleCalibration, selectField])
 
   if (!profile || !simulator) {
     return (
@@ -88,6 +117,7 @@ export default function SimulationPage() {
   const state = simulator.getStateAt(currentTime)
   const entry = getComputerEntry(selectedComputerSlug)
   const ComputerComponent = entry?.Component
+  const currentDisplayMode = getDisplayMode(state.depth, state.maxDepth, state.inDecompression, state.isPostDive)
 
   // ── Presentation (classroom) mode ─────────────────────────────────────────
   if (isPresentationMode) {
@@ -177,6 +207,20 @@ export default function SimulationPage() {
           )}
         </div>
 
+        {/* Calibration toggle */}
+        <button
+          onClick={toggleCalibration}
+          className={[
+            'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+            isCalibrating
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+          ].join(' ')}
+          title="Calibrer les champs de la montre"
+        >
+          🔧 Calibrer
+        </button>
+
         <button
           onClick={togglePresentationMode}
           className="px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-medium hover:bg-gray-700"
@@ -204,6 +248,16 @@ export default function SimulationPage() {
           />
         </div>
       </div>
+
+      {/* Calibration panel — rendered outside the scaled computer */}
+      {isCalibrating && (
+        <CalibrationPanel
+          computerSlug={selectedComputerSlug}
+          currentMode={currentDisplayMode}
+          mergedConfigs={mergedCalibConfigs}
+          onClose={toggleCalibration}
+        />
+      )}
     </div>
   )
 }

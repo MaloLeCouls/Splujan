@@ -35,6 +35,33 @@ export default function PlaybackControls({
   onSeek,
   onSpeedChange,
 }: Props) {
+  // Build the decompression status label
+  let decoStatus: React.ReactNode
+  if (state.inDecompression) {
+    decoStatus = (
+      <abbr
+        title="Décompression obligatoire — le plongeur doit effectuer des paliers avant de remonter en surface. Remonter sans palier est dangereux (accident de décompression)."
+        style={{ textDecoration: 'none', cursor: 'help' }}
+        className="text-red-600 font-semibold"
+      >
+        ⚠ Déco obligatoire
+      </abbr>
+    )
+  } else if (state.ndlMinutes !== null) {
+    const ndl = Math.floor(state.ndlMinutes)
+    decoStatus = (
+      <abbr
+        title={`NDL (No Decompression Limit) = Limite sans décompression. Il reste ${ndl} min avant que les paliers de décompression ne deviennent obligatoires. Au-delà, le plongeur doit faire des arrêts pour dégazer.`}
+        style={{ textDecoration: 'none', cursor: 'help' }}
+        className={ndl <= 5 ? 'text-orange-600 font-semibold' : 'text-gray-500'}
+      >
+        {ndl <= 5 ? `⚠ Sans déco : ${ndl} min` : `Sans déco : ${ndl} min`}
+      </abbr>
+    )
+  } else {
+    decoStatus = <span className="text-gray-400">—</span>
+  }
+
   return (
     <div className="bg-white rounded-xl shadow p-4 space-y-3 w-full max-w-xl">
       <Timeline
@@ -49,7 +76,7 @@ export default function PlaybackControls({
         <button
           onClick={onReset}
           className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-          title="Retour au début"
+          title="Revenir au début de la simulation"
         >
           ⏮
         </button>
@@ -66,11 +93,21 @@ export default function PlaybackControls({
         <SpeedSelector speed={speed} onChange={onSpeedChange} />
       </div>
 
-      {/* Status subtitle */}
-      <p className="text-xs text-gray-500 font-mono">
-        T+{fmtMM_SS(currentTimeSec)} · {state.depth.toFixed(1)} m ·{' '}
-        {state.inDecompression ? '⚠ DECO' : state.ndlMinutes !== null ? `NDL ${Math.floor(state.ndlMinutes)} min` : '—'}
-      </p>
+      {/* Status — temps · profondeur · état déco */}
+      <div className="flex items-center gap-2 text-xs font-mono text-gray-500">
+        <span
+          title="Temps écoulé depuis le début de la plongée (minutes:secondes)"
+          style={{ cursor: 'help' }}
+        >
+          T+{fmtMM_SS(currentTimeSec)}
+        </span>
+        <span className="text-gray-300">·</span>
+        <span title="Profondeur actuelle en mètres" style={{ cursor: 'help' }}>
+          {state.depth.toFixed(1)} m
+        </span>
+        <span className="text-gray-300">·</span>
+        {decoStatus}
+      </div>
     </div>
   )
 }

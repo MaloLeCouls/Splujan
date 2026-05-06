@@ -5,6 +5,12 @@ type Props = {
   onChange: (segments: DiveSegment[]) => void
 }
 
+const SEGMENT_TYPE_LABELS: Record<DiveSegment['type'], string> = {
+  descent:  'Descente',
+  constant: 'Fond (profondeur constante)',
+  ascent:   'Remontée',
+}
+
 export default function SegmentList({ segments, onChange }: Props) {
   function update(index: number, patch: Partial<DiveSegment>) {
     const updated = segments.map((s, i) => (i === index ? { ...s, ...patch } as DiveSegment : s))
@@ -27,9 +33,10 @@ export default function SegmentList({ segments, onChange }: Props) {
   return (
     <div className="space-y-2">
       {segments.map((seg, i) => (
-        <div key={i} className="flex gap-2 items-center p-2 bg-gray-50 rounded-lg border border-gray-200">
+        <div key={i} className="flex flex-wrap gap-2 items-center p-2 bg-gray-50 rounded-lg border border-gray-200">
           <select
             value={seg.type}
+            title="Type de phase : descente vers la profondeur cible, maintien au fond, ou remontée"
             onChange={e => {
               const type = e.target.value as DiveSegment['type']
               if (type === 'constant') {
@@ -40,13 +47,13 @@ export default function SegmentList({ segments, onChange }: Props) {
             }}
             className="border rounded px-1 py-0.5 text-sm"
           >
-            <option value="descent">Descente</option>
-            <option value="constant">Fond</option>
-            <option value="ascent">Remontée</option>
+            {(Object.keys(SEGMENT_TYPE_LABELS) as DiveSegment['type'][]).map(t => (
+              <option key={t} value={t}>{SEGMENT_TYPE_LABELS[t]}</option>
+            ))}
           </select>
 
-          <label className="text-sm text-gray-600">
-            Prof.
+          <label className="text-sm text-gray-600 flex items-center gap-1" title="Profondeur cible en mètres">
+            Profondeur
             <input
               type="number"
               min={0}
@@ -62,7 +69,7 @@ export default function SegmentList({ segments, onChange }: Props) {
             m
           </label>
 
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 flex items-center gap-1" title="Durée de cette phase en minutes">
             Durée
             <input
               type="number"
@@ -77,6 +84,7 @@ export default function SegmentList({ segments, onChange }: Props) {
           <button
             onClick={() => remove(i)}
             className="ml-auto text-red-400 hover:text-red-600 text-sm"
+            title="Supprimer ce segment"
           >
             ✕
           </button>

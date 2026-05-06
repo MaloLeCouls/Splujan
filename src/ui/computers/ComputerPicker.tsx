@@ -1,15 +1,27 @@
+import { useNavigate } from 'react-router-dom'
 import { listUIComputers } from './ui-registry'
 import { useStore } from '../../store/useStore'
 
 export default function ComputerPicker() {
+  const navigate = useNavigate()
   const { selectedComputerSlug, setSelectedComputer } = useStore()
   const computers = listUIComputers()
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-        Ordinateur de plongée
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+          Ordinateur de plongée
+        </h2>
+        <button
+          onClick={() => navigate('/calibration')}
+          className="text-xs text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
+          title="Ajuster la position et la taille des champs affichés sur l'écran de la montre"
+        >
+          🔧 Calibrer l'affichage
+        </button>
+      </div>
+
       <div className="flex flex-wrap gap-4">
         {computers.map(({ slug, label }) => {
           const selected = slug === selectedComputerSlug
