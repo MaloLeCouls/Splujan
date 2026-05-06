@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dive Computer Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Iceland&family=VT323&family=Share+Tech+Mono&family=DotGothic16&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background: #fff;
+    color:#15170f;
+    font-family: ui-monospace, monospace;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .watch{
+    position:relative;
+    width: min(640px, 92vw);
+    aspect-ratio: 1 / 1;
+    user-select:none;
+  }
+  .watch img.bg{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    display:block;
+    pointer-events:none;
+  }
+
+  /* ──────────────────────────────────────────────────────────────────────
+     LCD layout — coordinates as % of the 1254×1254 photo.
+     The LCD active area sits roughly:
+         left  ≈ 31%   right ≈ 69%
+         top   ≈ 26%   bot   ≈ 76%
+     Width  ≈ 38%, Height ≈ 50%.
+     We'll position our fields relative to that bounding box.
+     ────────────────────────────────────────────────────────────────────── */
+
+  .ov{
+    position: absolute;
+    color: #1a1c12;
+    font-weight: 700;
+    pointer-events: none;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* ── Row 1: speaker icon + DEPTH + AC + m ── */
+  .ov-speaker{
+    left: 32%; top: 30%;
+    font-family: "VT323", monospace;
+    font-size: clamp(16px, 2.6vw, 22px);
+    letter-spacing: -0.1em;
+  }
+  .ov-depth{
+    left: 38%; top: 28%;
+    width: 24%;
+    text-align: center;
+    font-family: "Iceland", monospace;
+    font-weight: 400;
+    font-size: clamp(40px, 7.2vw, 60px);
+    letter-spacing: -0.02em;
+  }
+  .ov-ac{
+    left: 62.5%; top: 29.5%;
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(10px, 1.6vw, 14px);
+  }
+  .ov-m{
+    left: 62.5%; top: 35%;
+    font-family: "DotGothic16", monospace;
+    font-size: clamp(12px, 1.9vw, 16px);
+  }
+
+  /* ── Row 2: NDL big number + NO DEC TIME label ── */
+  .ov-ndl{
+    left: 48%; top: 44%;
+    width: 16%;
+    text-align: center;
+    font-family: "VT323", monospace;
+    font-weight: 400;
+    font-size: clamp(34px, 6vw, 52px);
+    letter-spacing: 0.02em;
+  }
+  .ov-ndec{
+    left: 53%; top: 53%;
+    font-family: "Share Tech Mono", monospace;
+    font-size: clamp(9px, 1.4vw, 12px);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Row 3: TIME / DIVE TIME ── */
+  .ov-time{
+    left: 33%; top: 60%;
+    width: 16%;
+    text-align: center;
+    font-family: "Iceland", monospace;
+    font-weight: 400;
+    font-size: clamp(20px, 3.6vw, 30px);
+    letter-spacing: 0.02em;
+  }
+  .ov-divetime{
+    left: 54%; top: 60%;
+    width: 12%;
+    text-align: center;
+    font-family: "Iceland", monospace;
+    font-weight: 400;
+    font-size: clamp(20px, 3.6vw, 30px);
+    letter-spacing: 0.02em;
+  }
+  .ov-time-label{
+    left: 33%; top: 67%;
+    width: 16%;
+    text-align: center;
+    font-family: "Share Tech Mono", monospace;
+    font-size: clamp(8px, 1.2vw, 11px);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+  .ov-divetime-label{
+    left: 54%; top: 67%;
+    width: 12%;
+    text-align: center;
+    font-family: "Share Tech Mono", monospace;
+    font-size: clamp(8px, 1.2vw, 11px);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  /* Vertical separator between TIME and DIVE TIME */
+  .ov-sep{
+    left: 50%; top: 60%;
+    width: 1px; height: 7%;
+    background: rgba(26,28,18,0.35);
+  }
+
+  /* ── Buttons (invisible click targets over the metallic buttons) ── */
+  .pbtn{
+    position: absolute;
+    border: none; padding: 0; margin: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 10;
+  }
+  .pbtn:focus{
+    outline: 2px solid rgba(255,255,255,0.6);
+    outline-offset: 2px;
+  }
+  .pbtn.select{ left: 19%;  top: 44%; width: 9%; height: 9%; }
+  .pbtn.mode  { right: 19%; top: 44%; width: 9%; height: 9%; }
+  .pbtn.down  { left: 36%;  top: 70%; width: 9%; height: 9%; }
+  .pbtn.up    { right: 36%; top: 70%; width: 9%; height: 9%; }
+
+  .pbtn.pressed::after{
+    content: ""; position: absolute; inset: -4px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8), 0 0 14px rgba(255,255,255,0.5);
+    animation: pulse 0.45s ease-out;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.85); opacity: 1; }
+    100% { transform: scale(1.12); opacity: 0; }
+  }
+
+  .status{
+    position: absolute;
+    left: 50%; bottom: -32px;
+    transform: translateX(-50%);
+    color: #6a7780;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Calibration helper — toggle on by adding class .debug to .watch to see overlay boxes */
+  .watch.debug .ov{ outline: 1px dashed rgba(255,0,0,0.6); }
+  .watch.debug .ov::before{
+    content: attr(data-label);
+    position: absolute;
+    top: -10px; left: 0;
+    font-size: 9px; color: red;
+    font-family: monospace;
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="dive-app.jsx"></script>
+</body>
+</html>

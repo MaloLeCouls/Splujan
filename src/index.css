@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* DSEG LCD fonts — place .woff2 files in public/fonts/ */
+@font-face {
+  font-family: 'DSEG7Modern';
+  src: url('/fonts/DSEG7Modern-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DSEG14Modern';
+  src: url('/fonts/DSEG14Modern-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* LCD display text class */
+.lcd-digit {
+  font-family: 'DSEG7Modern', monospace;
+}
+
+.lcd-alpha {
+  font-family: 'DSEG14Modern', monospace;
+}
+
+/* Blink animation for alarms */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}

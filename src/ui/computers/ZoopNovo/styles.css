@@ -1,0 +1,21 @@
+.zoop-novo {
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
+@keyframes zn-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@keyframes zn-blink-slow {
+  0%, 59% { opacity: 1; }
+  60%, 100% { opacity: 0; }
+}
+
+.zn-blink {
+  animation: zn-blink 0.8s step-end infinite;
+}
+
+.zn-blink-slow {
+  animation: zn-blink-slow 1.2s step-end infinite;
+}
