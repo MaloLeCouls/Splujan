@@ -15,7 +15,8 @@ function Battery({ x, y }: { x: number; y: number }) {
   )
 }
 
-function WetContact({ x, y }: { x: number; y: number }) {
+// Icône #2 manuel Zoop Novo — "Alarme de plongée" (3 arcs / buzzer)
+function DiveAlarmIndicator({ x, y }: { x: number; y: number }) {
   return (
     <g fill="none" stroke="#1b2b08" strokeWidth="1.3" strokeLinecap="round">
       <path d={`M ${x + 1} ${y + 8} A 5 5 0 0 1 ${x + 1} ${y - 2}`} />
@@ -32,7 +33,7 @@ export default function SurfaceMode({ state }: Props) {
 
   return (
     <g>
-      <WetContact x={5} y={13} />
+      <DiveAlarmIndicator x={5} y={13} />
       <Battery x={145} y={6} />
 
       <line x1="4" y1="27" x2="162" y2="27" stroke="#1b2b08" strokeWidth="0.5" opacity="0.35" />

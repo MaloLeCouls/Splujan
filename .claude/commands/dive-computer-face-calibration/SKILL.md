@@ -62,11 +62,25 @@ For round LCDs, still emit a rectangular bbox; it's a placement reference, not a
 
 Compare clean vs. filled. Every region that gained dark pixels in the filled image is a candidate field. Note also segment indicators (ascent rate bars, tissue saturation bars, alarm icons) — they are filled-segment fields, not text fields, but still belong in `fields`.
 
+### Step 3b — Identify icons from the manual (mandatory before Step 4)
+
+**Never infer an icon's meaning from its visual shape.** A 3-arc pattern can mean alarm, bluetooth, wireless, sonar, or speaker depending on the manufacturer. An arc + dot can be NFC or dive alarm. Segment bars can be ascent rate, tissue loading, or battery — shape alone does not tell you which.
+
+Before naming any icon or indicator field, do the following:
+
+1. **Locate the icon table** in the device manual (typically a page titled "Symbols", "Indicators", or "Display elements"). For Suunto devices this is usually in the first few pages (e.g., Zoop Novo p.8 §2.3 — 8 icons listed with numeric IDs).
+2. **Match by documented meaning**, not by appearance. Cross-reference the manual's description with canonical names in `references/field_vocabulary.md`.
+3. If the manual is unavailable, name every unidentified icon `<slug>_icon_<sequence>` (e.g., `zoop_icon_1`), set `"confidence": "low"`, and document the shape in `notes` so the user can identify it.
+
+**Suunto-specific known confusions:**
+- The 3-arc buzzer shape = "Alarme de plongée" (icône #2) → `dive_alarm_indicator`. Active during dive when dive alarm function is on.
+- The "AC" text rendered on screen = "Contacts d'eau actifs" (icône #6, §3.26) → `ac_indicator`. This is a text field, not an arc icon. These two are completely different fields.
+
 ### Step 4 — Identify each visible element
 
 For each piece of content visible on the filled image, determine:
 
-1. **Canonical field name** — pick from `references/field_vocabulary.md`. Do NOT invent new names if a canonical one fits. Only invent if the watch has a feature truly outside the vocabulary, and document it in `notes`.
+1. **Canonical field name** — pick from `references/field_vocabulary.md`. Do NOT invent new names if a canonical one fits. Only invent if the watch has a feature truly outside the vocabulary, and document it in `notes`. For icon-shaped elements, apply Step 3b first.
 2. **`bbox: [x, y, w, h]`** — clean-image pixel coordinates.
 3. **`font`** — see `references/fonts_guide.md`. Most common: `dseg7` (large 7-segment numerals), `dseg14` (alphanumeric), `dot_matrix` (pixel-style labels), `segments` (custom shaped indicators).
 4. **`size`** — pixel height of a glyph (cap height for text, full height for segments).
@@ -96,6 +110,8 @@ This is what lets a renderer simulate "the watch over time" — the runtime tran
 
 **Do not invent values not present in the manual.** If a state is described qualitatively only ("the screen flashes"), emit it with a `flags` field rather than guessing numbers.
 
+If the manual page you are scanning to extract presets is also the icon-table page (or adjacent to it), use that opportunity to complete Step 3b — cross-check every icon in `visible_fields` against the manual's documented meaning before committing the preset.
+
 ### Step 7 — Write, summarize, present
 
 1. Write the spec to `/mnt/user-data/outputs/<slug>.spec.json`.
@@ -121,7 +137,7 @@ Before emitting the JSON, run these mentally:
 After presenting the spec, expect at least one round of human adjustment. Common requests and how to handle them:
 
 - *"The depth box is shifted 12 px"* → apply offset, re-emit full spec.
-- *"You missed the AC indicator"* → add the field, re-emit.
+- *"You missed the dive alarm icon"* → check the manual icon table, confirm the canonical name, add the field, re-emit.
 - *"`DIVE TIME` is screen-printed on the bezel"* → move it from `fields` to `static_labels`, or remove if it's already in the background image.
 - *"This font is wrong, it's not 7-seg, look closer"* → revise the font assignment, re-emit.
 

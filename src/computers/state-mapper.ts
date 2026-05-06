@@ -43,7 +43,8 @@ export function mapStateToCanonical(state: DiveState, wallClock = new Date()): C
     tank_pressure: Math.round(state.tankPressure),
 
     // Indicators derived from state
-    ac_indicator:   state.depth > 0.5,
+    // Icône #2 manuel — "Alarme de plongée" : active dès qu'on est en immersion
+    dive_alarm_indicator: state.depth > 0.5,
     slow_indicator: state.ascentRateAlarm !== 'ok',
     stop_indicator: state.inDecompression,
     battery_icon:   3,  // no battery sensor in sim — always show full

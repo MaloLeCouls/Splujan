@@ -61,7 +61,8 @@ If a watch has a feature truly outside this list, invent a snake_case name and d
 
 | Canonical name | Description |
 |---|---|
-| `ac_indicator` | "AC" — water contacts active / dive mode triggered |
+| `dive_alarm_indicator` | Dive alarm active — rendered as 3-arc buzzer/speaker icon. **Never identify from shape alone — always confirm in the manual icon table.** (Suunto Zoop Novo: icône #2 "Alarme de plongée", p.8.) |
+| `ac_indicator` | **"AC" text** visible on screen — water contacts active (Suunto Zoop Novo: icône #6 "Contacts d'eau actifs" §3.26). This is a rendered text field, NOT an arc/shape icon. |
 | `battery_icon` | Battery state indicator |
 | `battery_low` | Low battery warning |
 | `alarm_icon` | Generic warning triangle |
@@ -75,6 +76,8 @@ If a watch has a feature truly outside this list, invent a snake_case name and d
 | `tissue_bar` | Tissue saturation bar graph |
 | `n2_bar` | Nitrogen loading bar |
 | `o2_bar` | Oxygen loading bar |
+
+> **Icon identification rule — MANDATORY**: Visual shape alone is never sufficient to name an icon. A 3-arc pattern could be a speaker, an alarm, a wireless signal, or a sonar ping depending on the manufacturer. Before assigning any canonical name to an icon-shaped field, read the device manual's icon table and match by documented meaning, not appearance. If the manual is not available, name it `<slug>_icon_unidentified` and flag `"confidence": "low"`.
 
 ## Free-dive specific
 

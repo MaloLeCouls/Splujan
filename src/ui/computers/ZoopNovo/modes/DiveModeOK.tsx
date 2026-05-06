@@ -15,7 +15,9 @@ function Battery({ x, y }: { x: number; y: number }) {
   )
 }
 
-function WetContact({ x, y }: { x: number; y: number }) {
+// Icône #2 manuel Zoop Novo — "Alarme de plongée" (haut-parleur/buzzer, 3 arcs)
+// Indique que la fonction alarme de plongée est active pendant l'immersion.
+function DiveAlarmIndicator({ x, y }: { x: number; y: number }) {
   return (
     <g fill="none" stroke="#1b2b08" strokeWidth="1.2" strokeLinecap="round">
       <path d={`M ${x + 1} ${y + 7} A 4 4 0 0 1 ${x + 1} ${y - 1}`} />
@@ -43,8 +45,8 @@ export default function DiveModeOK({ state }: Props) {
 
   return (
     <g>
-      {/* Row 1 — wet contact, depth, battery */}
-      <WetContact x={5} y={13} />
+      {/* Row 1 — dive alarm indicator, depth, battery */}
+      <DiveAlarmIndicator x={5} y={13} />
       <Battery x={148} y={6} />
 
       <text x="118" y="26" textAnchor="end" fontSize="27" className="lcd-digit">

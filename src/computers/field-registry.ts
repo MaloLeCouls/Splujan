@@ -176,8 +176,10 @@ export const FIELD_REGISTRY = {
   },
 
   // ── Indicators / icons ────────────────────────────────────────────────────
-  ac_indicator: {
-    description: 'Wet contacts active / dive mode triggered (AC waves icon)',
+  // Manuel p.8 icône #2 — "Alarme de plongée" (3 arcs / buzzer).
+  // ≠ icône #6 "Contacts d'eau actifs" qui affiche le texte "AC" (§3.26).
+  dive_alarm_indicator: {
+    description: 'Dive alarm active — icône #2 manuel (3 arcs buzzer/haut-parleur)',
     value_type: 'bool', category: 'indicator',
   },
   battery_icon: {

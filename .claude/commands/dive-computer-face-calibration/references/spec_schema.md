@@ -126,9 +126,9 @@ Optional. Each preset is a snapshot of the display in a particular situation, po
       "max_chars": 5,
       "confidence": "high"
     },
-    "ac_indicator": {
+    "dive_alarm_indicator": {
       "bbox": [770, 290, 60, 24],
-      "font": "dot_matrix",
+      "font": "icon",
       "size": 18,
       "align": "left",
       "color": "#000",
@@ -184,10 +184,10 @@ Optional. Each preset is a snapshot of the display in a particular situation, po
   "presets": {
     "diving_15m_safe": {
       "description": "At 15m, well within NDL, normal dive",
-      "visible_fields": ["depth", "ac_indicator", "ndl", "time", "dive_time"],
+      "visible_fields": ["depth", "dive_alarm_indicator", "ndl", "time", "dive_time"],
       "values": {
         "depth": 15.0,
-        "ac_indicator": true,
+        "dive_alarm_indicator": true,
         "ndl": 53,
         "time": "14:27",
         "dive_time": 18

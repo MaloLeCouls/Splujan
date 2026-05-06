@@ -29,9 +29,12 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
   fields: {
 
-    // ── Row 1: wet-contact icon | depth | battery ─────────────────────────
+    // ── Row 1: dive alarm indicator | depth | battery ─────────────────────
+    // Manuel p.8 icône #2 — "Alarme de plongée" (3 arcs / haut-parleur).
+    // S'affiche quand la fonction alarme de plongée est active en immersion.
+    // NE PAS CONFONDRE avec l'icône #6 "Contacts d'eau actifs" qui affiche "AC".
 
-    ac_indicator: {
+    dive_alarm_indicator: {
       bbox: [2, 2, 18, 24],
       font: 'icon',
       size: 24,
@@ -271,26 +274,26 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     descent: {
       description: 'Active descent — NDL counting down, no ascent-rate bar yet.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time'],
       values: {
         depth: 12.0,
         ndl: 85,
         time: [14, 30],
         dive_time: [2, 30],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
       },
     },
 
     bottom_safe: {
       description: 'At depth, well within NDL — typical recreational dive at 25 m.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
       values: {
         depth: 25.0,
         ndl: 45,
         time: [14, 45],
         dive_time: [18, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
         max_depth: 25.0,
       },
@@ -298,13 +301,13 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     bottom_ndl_low: {
       description: 'NDL ≤ 3 min — ndl display blinks, time to ascend.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
       values: {
         depth: 25.0,
         ndl: 3,
         time: [15, 0],
         dive_time: [30, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
         max_depth: 25.0,
       },
@@ -313,13 +316,13 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     ascending: {
       description: 'Controlled ascent within NDL — normal ascent rate.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time', 'max_depth'],
       values: {
         depth: 18.0,
         ndl: 12,
         time: [15, 5],
         dive_time: [35, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
         max_depth: 25.0,
         ascent_rate_bar: 2,
@@ -328,14 +331,14 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     ascending_too_fast: {
       description: 'Ascent rate exceeds limit — SLOW blinks in alarm colour.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'slow_indicator', 'time', 'dive_time'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'slow_indicator', 'time', 'dive_time'],
       values: {
         depth: 20.0,
         ndl: 8,
         slow_indicator: true,
         time: [15, 6],
         dive_time: [36, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
         ascent_rate_bar: 4,
       },
@@ -344,14 +347,14 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     safety_stop: {
       description: 'Safety stop at 5 m — STOP displayed (non-mandatory, 3 min recommended).',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'stop_indicator', 'ndl', 'time', 'dive_time'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'stop_indicator', 'ndl', 'time', 'dive_time'],
       values: {
         depth: 5.0,
         ndl: 0,
         stop_indicator: true,
         time: [15, 8],
         dive_time: [38, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
       },
       flags: ['stop_blinking'],
@@ -360,7 +363,7 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
     deco_required: {
       description: 'Decompression required — STOP blinks, ceiling and DTR displayed.',
       visible_fields: [
-        'ac_indicator', 'depth', 'battery_icon',
+        'dive_alarm_indicator', 'depth', 'battery_icon',
         'stop_indicator', 'ceiling', 'asc_time', 'dive_time',
       ],
       values: {
@@ -369,7 +372,7 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
         ceiling: 3,
         asc_time: 12,
         dive_time: [45, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
       },
       flags: ['stop_blinking', 'alarm_active'],
@@ -378,7 +381,7 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
     deco_at_stop: {
       description: 'Executing a deco stop — diver at ceiling depth.',
       visible_fields: [
-        'ac_indicator', 'depth', 'battery_icon',
+        'dive_alarm_indicator', 'depth', 'battery_icon',
         'stop_indicator', 'ceiling', 'asc_time', 'dive_time',
       ],
       values: {
@@ -387,7 +390,7 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
         ceiling: 3,
         asc_time: 5,
         dive_time: [50, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 3,
       },
       flags: ['stop_blinking'],
@@ -417,13 +420,13 @@ export const SUUNTO_ZOOP_NOVO_SPEC: ComputerSpec = {
 
     battery_low: {
       description: 'Low battery warning — battery icon changes, dive continues.',
-      visible_fields: ['ac_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time'],
+      visible_fields: ['dive_alarm_indicator', 'depth', 'battery_icon', 'ndl', 'time', 'dive_time'],
       values: {
         depth: 15.0,
         ndl: 30,
         time: [14, 40],
         dive_time: [10, 0],
-        ac_indicator: true,
+        dive_alarm_indicator: true,
         battery_icon: 0,
       },
       flags: ['battery_low'],
